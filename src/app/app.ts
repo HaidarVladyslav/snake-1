@@ -3,7 +3,7 @@ import { Application, Assets } from 'pixi.js';
 import { Field } from './field';
 import { getCellSize } from './get-cell-size';
 import { Mode } from './mode';
-import { CELLS_X, CELLS_Y } from './config';
+import { CELLS_X, CELLS_Y, INITIAL_SPEED, MAX_SPEED, SPEED_DIFF } from './config';
 import { Snake } from './snake';
 import { Flower } from './flower';
 import { Direction } from './direction';
@@ -15,8 +15,7 @@ import { Direction } from './direction';
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = signal('snake-1');
-  private mode = signal<Mode>('light');
+  private mode = signal<Mode>('dark');
 
   constructor() {
     (async () => {
@@ -34,8 +33,36 @@ export class App {
         alias: 'eggHead',
         src: 'https://pixijs.com/assets/eggHead.png',
       });
+      Assets.add({
+        alias: 'helmlok',
+        src: 'https://pixijs.com/assets/helmlok.png',
+      });
+      Assets.add({
+        alias: 'skully',
+        src: 'https://pixijs.com/assets/skully.png',
+      });
+      Assets.add({
+        alias: 'panda',
+        src: 'https://pixijs.com/assets/panda.png',
+      });
+      // Assets.add({
+      //   alias: 'maggot',
+      //   src: 'https://pixijs.com/assets/maggot.png',
+      // });
+      // Assets.add({
+      //   alias: 'bunny',
+      //   src: 'https://pixijs.com/assets/bunny.png',
+      // });
 
-      const assets = await Assets.load(['flowerTop', 'eggHead']);
+      const assets = await Assets.load([
+        'flowerTop',
+        'eggHead',
+        'panda',
+        // 'maggot',
+        // 'bunny',
+        'helmlok',
+        'skully',
+      ]);
 
       document.body.appendChild(app.canvas);
 
@@ -45,6 +72,8 @@ export class App {
         up: false,
         down: false,
       };
+
+      let speed = INITIAL_SPEED;
 
       window.addEventListener('keydown', (e: KeyboardEvent) => {
         if (e.code === 'ArrowLeft' && !direction.right) {
@@ -68,21 +97,30 @@ export class App {
 
       const { cellWidth, cellHeight } = getCellSize(app, CELLS_X, CELLS_Y);
       const field = new Field(app, CELLS_X, CELLS_Y, cellWidth, cellHeight, this.mode());
-      const snake = new Snake(app, cellWidth, cellHeight, CELLS_X, CELLS_Y);
+      const snake = new Snake(app, cellWidth, cellHeight, CELLS_X, CELLS_Y, this.mode());
 
-      let flower: Flower | null = null;
+      snake.isCollidedObs$.subscribe((d) => {
+        reduceSpeed();
+      });
+
+      let flowers: Flower[] = [];
 
       const generateFlower = () => {
+        flowers.length = 0;
+
         const assetsKeys = Object.keys(assets).filter((key) => !key.includes('https'));
-        const assetSpriteName = assetsKeys[Math.floor(Math.random() * assetsKeys.length)];
-        flower = new Flower(
-          app,
-          Math.floor(Math.random() * CELLS_X) * cellWidth,
-          Math.floor(Math.random() * CELLS_Y) * cellHeight,
-          cellWidth,
-          cellHeight,
-          assetSpriteName,
-        );
+        for (let i = 0; i <= Math.floor(Math.random() * assetsKeys.length); i++) {
+          const assetSpriteName = assetsKeys[Math.floor(Math.random() * assetsKeys.length)];
+          const flower = new Flower(
+            app,
+            Math.floor(Math.random() * CELLS_X) * cellWidth,
+            Math.floor(Math.random() * CELLS_Y) * cellHeight,
+            cellWidth,
+            cellHeight,
+            assetSpriteName,
+          );
+          flowers.push(flower);
+        }
       };
 
       generateFlower();
@@ -98,19 +136,34 @@ export class App {
       };
 
       const checkIfSubjectIsCollidedWithHead = () => {
-        if (!flower) {
+        if (!flowers.length) {
           return;
         }
 
-        if (snake.xIndex === flower.xIndex && snake.yIndex === flower.yIndex) {
-          flower.container.destroy();
+        if (
+          flowers.some((flower) => snake.xIndex === flower.xIndex && snake.yIndex === flower.yIndex)
+        ) {
+          flowers.forEach((flower) => flower.container.destroy());
           snake.addTail();
           generateFlower();
+          updateSpeed();
         }
       };
 
+      const updateSpeed = () => {
+        if (speed === MAX_SPEED) {
+          return;
+        }
+        if (snake.getLength % 4 === 0) {
+          speed -= SPEED_DIFF;
+        }
+      };
+
+      const reduceSpeed = () => {
+        speed -= SPEED_DIFF;
+      };
+
       let count = 0;
-      let speed = 8;
       app.ticker.add((time) => {
         if (++count > speed) {
           count = 0;
