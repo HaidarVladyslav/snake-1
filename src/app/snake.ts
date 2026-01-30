@@ -122,12 +122,19 @@ export class Snake {
 
     const partThatCollidedWithHeadIndex = head
       ? this.parts.findIndex(
-          (el, ind) => ind !== 0 && el.graphics.x === head.x && el.graphics.y === head.y,
+          (el, ind, array) =>
+            ind !== 0 &&
+            ind !== array.length - 1 &&
+            el.graphics.x === head.x &&
+            el.graphics.y === head.y,
         )
       : -1;
 
     if (partThatCollidedWithHeadIndex !== -1) {
-      this.parts = this.parts.filter((part, index) => {
+      this.parts = this.parts.filter((part, index, array) => {
+        if (index === array.length - 1) {
+          return true;
+        }
         if (index < partThatCollidedWithHeadIndex) {
           return true;
         }

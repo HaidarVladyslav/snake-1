@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { Application, Assets } from 'pixi.js';
+import { sound } from '@pixi/sound';
 import { Field } from './field';
 import { getCellSize } from './get-cell-size';
 import { Mode } from './mode';
@@ -7,7 +8,6 @@ import { CELLS_X, CELLS_Y, INITIAL_SPEED, MAX_SPEED, SPEED_DIFF } from './config
 import { Snake } from './snake';
 import { Flower } from './flower';
 import { Direction } from './direction';
-import { sound } from '@pixi/sound';
 
 @Component({
   selector: 'app-root',
@@ -190,6 +190,8 @@ export class App {
         if (++count > speed) {
           count = 0;
           move();
+
+          field.updateFilter();
         }
 
         if (++countForRandomSoundToBePlayed > Math.random() * 200 + 550) {
