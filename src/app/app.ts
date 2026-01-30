@@ -7,6 +7,7 @@ import { CELLS_X, CELLS_Y, INITIAL_SPEED, MAX_SPEED, SPEED_DIFF } from './config
 import { Snake } from './snake';
 import { Flower } from './flower';
 import { Direction } from './direction';
+import { sound } from '@pixi/sound';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +25,23 @@ export class App {
       (globalThis as any).__PIXI_APP__ = app;
 
       await app.init({ background: '#1099bb', resizeTo: window });
+
+      const soundNames = ['breeze-of-blood', 'creepy-fall', 'monster-growl', 'wet-and-squelchy'];
+      const speedUpSoundName = 'speed-up';
+      const panicSqueakSoundName = 'panic-squeak';
+      const movingRandomSoundNames = [
+        'evil-dwarf-laugh',
+        'cartoon-fart',
+        'girl-saying-no-no-no',
+        'whistling',
+        'monkey-mocking-laugh',
+        'little-cat-meow',
+      ];
+
+      soundNames.forEach((s) => sound.add(s, s + '.mp3'));
+      movingRandomSoundNames.forEach((s) => sound.add(s, s + '.mp3'));
+      sound.add(speedUpSoundName, speedUpSoundName + '.mp3');
+      sound.add(panicSqueakSoundName, panicSqueakSoundName + '.mp3');
 
       Assets.add({
         alias: 'flowerTop',
@@ -143,6 +161,7 @@ export class App {
         if (
           flowers.some((flower) => snake.xIndex === flower.xIndex && snake.yIndex === flower.yIndex)
         ) {
+          sound.play(soundNames[Math.floor(Math.random() * soundNames.length)], { speed: 2 });
           flowers.forEach((flower) => flower.container.destroy());
           snake.addTail();
           generateFlower();
@@ -156,18 +175,28 @@ export class App {
         }
         if (snake.getLength % 4 === 0) {
           speed -= SPEED_DIFF;
+          sound.play(speedUpSoundName, { speed: 2 });
         }
       };
 
       const reduceSpeed = () => {
-        speed -= SPEED_DIFF;
+        speed += SPEED_DIFF * 2;
+        sound.play(panicSqueakSoundName);
       };
 
       let count = 0;
+      let countForRandomSoundToBePlayed = 0;
       app.ticker.add((time) => {
         if (++count > speed) {
           count = 0;
           move();
+        }
+
+        if (++countForRandomSoundToBePlayed > Math.random() * 200 + 550) {
+          countForRandomSoundToBePlayed = 0;
+          sound.play(
+            movingRandomSoundNames[Math.floor(Math.random() * movingRandomSoundNames.length)],
+          );
         }
       });
     })();

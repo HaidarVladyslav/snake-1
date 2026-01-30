@@ -164,8 +164,52 @@ export class Snake {
         );
 
         part.graphics.addChild(polygon);
-      } else if (container.children.length === 2 && index !== 0 && index !== array.length - 1) {
-        part.graphics.removeChildAt(1);
+      } else if (index !== 0 && index !== array.length - 1) {
+        if (container.children.length === 2) {
+          part.graphics.removeChildAt(1);
+        }
+        if (container.children.length === 1) {
+          const width = part.graphics.width;
+          const height = part.graphics.height;
+          const leftStripe = new Graphics()
+            .poly([
+              (width * 3) / 32,
+              (height * 28) / 32,
+              (width * 10) / 32,
+              (height * 28) / 32,
+              (width * 7) / 32,
+              (height * 20) / 32,
+              (width * 1) / 32,
+              (height * 24) / 32,
+            ])
+            .fill({ color: this.mode === 'light' ? 0x000000 : 0xffffff });
+          const middleStripe = new Graphics()
+            .poly([
+              (width * 12) / 32,
+              (height * 28) / 32,
+              (width * 19) / 32,
+              (height * 28) / 32,
+              (width * 14) / 32,
+              (height * 11) / 32,
+              (width * 7) / 32,
+              (height * 15) / 32,
+            ])
+            .fill({ color: this.mode === 'light' ? 0x000000 : 0xffffff });
+          const rightStripe = new Graphics()
+            .poly([
+              (width * 21) / 32,
+              (height * 28) / 32,
+              (width * 28) / 32,
+              (height * 28) / 32,
+              (width * 22) / 32,
+              (height * 3) / 32,
+              (width * 15) / 32,
+              (height * 7) / 32,
+            ])
+            .fill({ color: this.mode === 'light' ? 0x000000 : 0xffffff });
+
+          part.graphics.addChild(leftStripe, middleStripe, rightStripe);
+        }
       } else if (part.graphics.children.length === 2) {
         const polygon = this.generatePolygon(
           this.cellWidth,
